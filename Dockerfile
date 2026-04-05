@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only torch first (smaller, no CUDA)
+# Install numpy first explicitly
+RUN pip install --no-cache-dir numpy==1.26.4
+
+# Install CPU-only torch
 RUN pip install --no-cache-dir torch==2.2.2+cpu torchvision==0.17.2+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
@@ -20,7 +23,6 @@ RUN pip install --no-cache-dir \
     flask==3.1.0 \
     ultralytics==8.3.50 \
     opencv-python-headless==4.10.0.84 \
-    numpy>=1.24.0 \
     Pillow>=10.0.0 \
     matplotlib>=3.7.0 \
     reportlab>=4.0.0 \
