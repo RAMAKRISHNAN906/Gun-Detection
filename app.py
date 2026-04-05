@@ -397,6 +397,11 @@ def _process_job(job_id, file_path, file_type):
         print(f"[!] Processing error for job {job_id}: {e}")
 
 
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok'}), 200
+
+
 # ── Main ───────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -405,9 +410,6 @@ if __name__ == '__main__':
     print("  AI WEAPON DETECTION SYSTEM")
     print(f"  Starting server on http://0.0.0.0:{port}")
     print("=" * 60)
-    # Pre-load model at startup so first request is fast
-    print("[*] Loading AI model...")
-    get_detector()
-    print("[+] Model loaded. Server ready!")
+    print("[*] Server starting (model loads on first request)...")
     # use_reloader=False prevents auto-restart which wipes in-memory jobs
     app.run(debug=False, use_reloader=False, host='0.0.0.0', port=port)
