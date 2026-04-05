@@ -11,28 +11,26 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install torch CPU first
+# Install torch CPU
 RUN pip install --no-cache-dir \
     torch==2.2.2+cpu \
     torchvision==0.17.2+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install all other packages together so pip resolves numpy compatibility
+# Install all packages in one shot so pip resolves compatibility
 RUN pip install --no-cache-dir \
-    "numpy==1.26.4" \
-    "flask==3.1.0" \
-    "ultralytics==8.1.0" \
-    "opencv-python-headless==4.9.0.80" \
-    "Pillow>=10.0.0" \
-    "matplotlib>=3.7.0" \
-    "reportlab>=4.0.0" \
-    "werkzeug>=3.0.0"
-
-# Force reinstall numpy to ensure single clean version
-RUN pip install --no-cache-dir --force-reinstall numpy==1.26.4
+    numpy==1.26.4 \
+    flask==3.1.0 \
+    gunicorn==21.2.0 \
+    ultralytics==8.1.0 \
+    opencv-python-headless==4.9.0.80 \
+    Pillow==10.4.0 \
+    matplotlib==3.8.4 \
+    reportlab==4.2.2 \
+    werkzeug==3.0.3
 
 COPY . .
 
 EXPOSE 8080
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "300", "--workers", "1", "app:app"]
