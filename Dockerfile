@@ -22,13 +22,13 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     numpy==1.26.4 \
     flask==3.1.0 \
+    werkzeug==3.1.3 \
     gunicorn==21.2.0 \
     ultralytics==8.1.0 \
     opencv-python-headless==4.9.0.80 \
     Pillow==10.4.0 \
     matplotlib==3.8.4 \
-    reportlab==4.2.2 \
-    werkzeug==3.0.3
+    reportlab==4.2.2
 
 COPY . .
 
