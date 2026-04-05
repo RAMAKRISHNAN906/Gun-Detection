@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["python312", "libGL", "glib", "gcc"]
+nixPkgs = ["python312", "python312Packages.pip", "libGL", "glib", "gcc"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["python3 -m pip install -r requirements.txt"]
 
 [start]
-cmd = "python app.py"
+cmd = "python3 app.py"
