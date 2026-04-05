@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Force fresh build v2
+# Force fresh build v3
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
@@ -12,20 +12,19 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install torch CPU
+# Install torch CPU first
 RUN pip install --no-cache-dir \
-    torch==2.2.2+cpu \
-    torchvision==0.17.2+cpu \
+    torch==2.3.1+cpu \
+    torchvision==0.18.1+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install all packages in one shot so pip resolves compatibility
+# Install everything else - let pip resolve numpy automatically
 RUN pip install --no-cache-dir \
-    numpy==1.26.4 \
     flask==3.1.0 \
     werkzeug==3.1.3 \
     gunicorn==21.2.0 \
-    ultralytics==8.1.0 \
-    opencv-python-headless==4.9.0.80 \
+    ultralytics==8.3.50 \
+    opencv-python-headless==4.10.0.84 \
     Pillow==10.4.0 \
     matplotlib==3.8.4 \
     reportlab==4.2.2
