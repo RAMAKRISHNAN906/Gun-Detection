@@ -2,17 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System dependencies for OpenCV
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
 
 # Install CPU-only torch first (smaller, no CUDA)
 RUN pip install --no-cache-dir torch==2.2.2+cpu torchvision==0.17.2+cpu \
