@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Upload - SentinelAI{% endblock %}
+{% block nav_upload %}active{% endblock %}
+
+{% block content %}
+<section class="upload-section">
+    <div class="section-header">
+        <h2 class="section-title">Upload <span class="gradient-text">Media</span></h2>
+        <p class="section-subtitle">Upload an image or video for AI weapon detection analysis</p>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="upload-container glass-card">
+        <div class="upload-dropzone" id="dropZone">
+            <div class="dropzone-content" id="dropzoneContent">
+                <div class="upload-icon-wrapper">
+                    <div class="upload-pulse"></div>
+                    <i class="fas fa-cloud-upload-alt upload-main-icon"></i>
+                </div>
+                <h3>Drag & Drop Your File Here</h3>
+                <p>or click to browse files</p>
+                <div class="upload-formats">
+                    <span class="format-tag"><i class="fas fa-image"></i> JPG</span>
+                    <span class="format-tag"><i class="fas fa-image"></i> PNG</span>
+                    <span class="format-tag"><i class="fas fa-video"></i> MP4</span>
+                    <span class="format-tag"><i class="fas fa-video"></i> AVI</span>
+                    <span class="format-tag"><i class="fas fa-video"></i> MOV</span>
+                </div>
+                <div class="upload-limit">Maximum file size: 500MB</div>
+            </div>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.bmp,.webp,.mp4,.avi,.mov,.mkv,.wmv" hidden>
+        </div>
+
+        <!-- File Preview -->
+        <div class="file-preview" id="filePreview" style="display:none;">
+            <div class="preview-header">
+                <div class="preview-info">
+                    <i class="fas fa-file preview-file-icon" id="previewIcon"></i>
+                    <div>
+                        <div class="preview-name" id="previewName">filename.mp4</div>
+                        <div class="preview-size" id="previewSize">12.5 MB</div>
+                    </div>
+                </div>
+                <button class="btn-remove" id="removeFile" title="Remove file">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="preview-media" id="previewMedia">
+                <!-- Image or Video preview rendered here -->
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="upload-progress" id="uploadProgress" style="display:none;">
+            <div class="progress-header">
+                <span class="progress-label" id="progressLabel">Uploading...</span>
+                <span class="progress-percent" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-glow"></div>
+                </div>
+            </div>
+            <div class="progress-detail" id="progressDetail">Preparing file...</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="upload-actions" id="uploadActions" style="display:none;">
+            <button class="btn btn-primary btn-glow" id="startAnalysis">
+                <i class="fas fa-play"></i>
+                <span>Start AI Analysis</span>
+                <div class="btn-shine"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Processing Status -->
+    <div class="processing-overlay" id="processingOverlay" style="display:none;">
+        <div class="processing-card glass-card">
+            <div class="processing-animation">
+                <div class="proc-ring"></div>
+                <div class="proc-icon"><i class="fas fa-brain"></i></div>
+            </div>
+            <h3 class="processing-title">AI Analysis in Progress</h3>
+            <p class="processing-status" id="processingStatus">Initializing neural network...</p>
+            <div class="progress-bar-container" style="margin-top:20px;">
+                <div class="progress-bar" id="processingBar">
+                    <div class="progress-glow"></div>
+                </div>
+            </div>
+            <div class="processing-percent" id="processingPercent">0%</div>
+            <div class="processing-stats">
+                <div class="proc-stat">
+                    <i class="fas fa-clock"></i>
+                    <span id="procElapsed">0s</span>
+                </div>
+                <div class="proc-stat">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="procFrames">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

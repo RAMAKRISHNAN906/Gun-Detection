@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(python -c:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(powershell:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(copy:*)",
+      "Bash(where:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\ramak\\Desktop\\gun detection"
+    ]
+  }
+}

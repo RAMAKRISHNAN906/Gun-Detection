@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}SentinelAI - Advanced Weapon Detection System{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <i class="fas fa-robot"></i>
+            <span>Powered by YOLOv8 Deep Learning</span>
+        </div>
+        <h1 class="hero-title">
+            <span class="title-line">AI-Powered</span>
+            <span class="title-line gradient-text">Weapon Detection</span>
+            <span class="title-line">System</span>
+        </h1>
+        <p class="hero-description">
+            Advanced real-time threat analysis using state-of-the-art computer vision
+            and deep learning. Upload images or videos for instant AI-powered weapon
+            detection with frame-by-frame analysis.
+        </p>
+        <div class="hero-actions">
+            <a href="/upload" class="btn btn-primary btn-glow">
+                <i class="fas fa-upload"></i>
+                <span>Start Analysis</span>
+                <div class="btn-shine"></div>
+            </a>
+            <a href="#features" class="btn btn-secondary">
+                <i class="fas fa-info-circle"></i>
+                <span>Learn More</span>
+            </a>
+        </div>
+        <!-- Stats Row -->
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-number" data-count="99.2">0</div>
+                <div class="stat-label">Detection Accuracy %</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="30">0</div>
+                <div class="stat-label">FPS Processing</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="5">0</div>
+                <div class="stat-label">Weapon Classes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" data-count="100">0</div>
+                <div class="stat-label">Real-Time Analysis</div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="scanner-animation">
+            <div class="scanner-frame">
+                <div class="scanner-corner sc-tl"></div>
+                <div class="scanner-corner sc-tr"></div>
+                <div class="scanner-corner sc-bl"></div>
+                <div class="scanner-corner sc-br"></div>
+                <div class="scanner-line"></div>
+                <div class="scanner-content">
+                    <i class="fas fa-crosshairs scanner-icon"></i>
+                    <div class="scanner-text">SCANNING</div>
+                    <div class="scanner-sub">AI Analysis Active</div>
+                </div>
+            </div>
+            <div class="scanner-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+    <div class="section-header">
+        <h2 class="section-title">System <span class="gradient-text">Capabilities</span></h2>
+        <p class="section-subtitle">Advanced AI features for comprehensive threat detection</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-image"></i>
+            </div>
+            <h3>Image Analysis</h3>
+            <p>Upload JPG, PNG images for instant weapon detection with bounding boxes and confidence scores.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-video"></i>
+            </div>
+            <h3>Video Processing</h3>
+            <p>Frame-by-frame video analysis with MP4, AVI, MOV support and timeline heatmap generation.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <h3>Weapon Detection</h3>
+            <p>Detects guns, pistols, rifles, revolvers with high accuracy using custom YOLOv8 models.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h3>Person Tracking</h3>
+            <p>Identifies persons in proximity to detected weapons for comprehensive threat assessment.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-gauge-high"></i>
+            </div>
+            <h3>Threat Assessment</h3>
+            <p>AI-powered threat level classification: Low, Medium, and High risk with detailed analysis.</p>
+        </div>
+        <div class="feature-card glass-card">
+            <div class="feature-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <h3>PDF Reports</h3>
+            <p>Generate comprehensive analysis reports with charts, timelines, and recommendations.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="workflow-section">
+    <div class="section-header">
+        <h2 class="section-title">How It <span class="gradient-text">Works</span></h2>
+    </div>
+    <div class="workflow-steps">
+        <div class="workflow-step">
+            <div class="step-number">01</div>
+            <div class="step-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h3>Upload</h3>
+            <p>Drag & drop your image or video file</p>
+        </div>
+        <div class="workflow-connector"><i class="fas fa-chevron-right"></i></div>
+        <div class="workflow-step">
+            <div class="step-number">02</div>
+            <div class="step-icon"><i class="fas fa-brain"></i></div>
+            <h3>AI Analysis</h3>
+            <p>YOLOv8 processes every frame</p>
+        </div>
+        <div class="workflow-connector"><i class="fas fa-chevron-right"></i></div>
+        <div class="workflow-step">
+            <div class="step-number">03</div>
+            <div class="step-icon"><i class="fas fa-chart-line"></i></div>
+            <h3>Detection</h3>
+            <p>Weapons highlighted with confidence scores</p>
+        </div>
+        <div class="workflow-connector"><i class="fas fa-chevron-right"></i></div>
+        <div class="workflow-step">
+            <div class="step-number">04</div>
+            <div class="step-icon"><i class="fas fa-file-shield"></i></div>
+            <h3>Report</h3>
+            <p>Detailed threat analysis report generated</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Animate stats counters
+    const counters = document.querySelectorAll('.stat-number');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const target = parseFloat(el.dataset.count);
+                animateCounter(el, target);
+                observer.unobserve(el);
+            }
+        });
+    }, { threshold: 0.5 });
+    counters.forEach(c => observer.observe(c));
+
+    function animateCounter(el, target) {
+        const isFloat = target % 1 !== 0;
+        const duration = 2000;
+        const start = performance.now();
+        function update(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            const current = ease * target;
+            el.textContent = isFloat ? current.toFixed(1) : Math.floor(current);
+            if (progress < 1) requestAnimationFrame(update);
+            else el.textContent = isFloat ? target.toFixed(1) : target;
+        }
+        requestAnimationFrame(update);
+    }
+
+    // Staggered feature card animation
+    const cards = document.querySelectorAll('.feature-card');
+    const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('visible'), i * 100);
+                cardObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+    cards.forEach(c => cardObserver.observe(c));
+});
+</script>
+{% endblock %}

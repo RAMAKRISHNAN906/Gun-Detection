@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}AI Report - SentinelAI{% endblock %}
+
+{% block content %}
+<section class="report-section" data-job-id="{{ job_id }}">
+    <div class="section-header">
+        <h2 class="section-title">AI Analysis <span class="gradient-text">Report</span></h2>
+        <p class="section-subtitle">Comprehensive threat assessment and detailed findings</p>
+    </div>
+
+    <!-- Threat Gauge -->
+    <div class="report-top-grid">
+        <div class="gauge-card glass-card">
+            <h3 class="card-title"><i class="fas fa-gauge-high"></i> Threat Meter</h3>
+            <div class="gauge-container">
+                <svg class="gauge-svg" viewBox="0 0 200 120">
+                    <defs>
+                        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#00cc66"/>
+                            <stop offset="33%" style="stop-color:#ffcc00"/>
+                            <stop offset="66%" style="stop-color:#ff8800"/>
+                            <stop offset="100%" style="stop-color:#ff0040"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Background arc -->
+                    <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#1a1a3e" stroke-width="14" stroke-linecap="round"/>
+                    <!-- Colored arc -->
+                    <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251" class="gauge-fill" id="gaugeFill"/>
+                    <!-- Needle -->
+                    <line x1="100" y1="110" x2="100" y2="40" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" class="gauge-needle" id="gaugeNeedle" transform="rotate(-90, 100, 110)"/>
+                    <circle cx="100" cy="110" r="6" fill="#00d4ff"/>
+                </svg>
+                <div class="gauge-value" id="gaugeValue">0</div>
+                <div class="gauge-label" id="gaugeLabel">SAFE</div>
+            </div>
+        </div>
+
+        <div class="summary-card glass-card">
+            <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Analysis Summary</h3>
+            <div class="summary-items" id="summaryItems">
+                <div class="summary-row">
+                    <span class="summary-key">Threat Level</span>
+                    <span class="summary-val" id="sumThreat">--</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Weapons Found</span>
+                    <span class="summary-val" id="sumWeapons">0</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Confidence</span>
+                    <span class="summary-val" id="sumConfidence">0%</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">File Analyzed</span>
+                    <span class="summary-val" id="sumFileName">--</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Analysis Date</span>
+                    <span class="summary-val" id="sumDate">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Chart -->
+    <div class="timeline-card glass-card" id="timelineCard" style="display:none;">
+        <h3 class="card-title"><i class="fas fa-chart-bar"></i> Weapon Detection Timeline</h3>
+        <div class="timeline-chart" id="timelineChart">
+            <!-- Rendered by JS -->
+        </div>
+        <div class="timeline-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#00cc66"></span> Safe</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ffcc00"></span> Low</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ff8800"></span> Medium</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#ff0040"></span> High</span>
+        </div>
+    </div>
+
+    <!-- AI Messages -->
+    <div class="messages-card glass-card">
+        <h3 class="card-title"><i class="fas fa-robot"></i> AI Interpretation</h3>
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message">
+                <i class="fas fa-spinner fa-spin"></i> Loading analysis...
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations-card glass-card" id="recsCard" style="display:none;">
+        <h3 class="card-title"><i class="fas fa-list-check"></i> Recommendations</h3>
+        <div class="recs-list" id="recsList"></div>
+    </div>
+
+    <!-- Frame Snapshots Gallery -->
+    <div class="gallery-card glass-card" id="galleryCard" style="display:none;">
+        <h3 class="card-title"><i class="fas fa-images"></i> Detection Snapshots</h3>
+        <div class="snapshot-gallery" id="snapshotGallery">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="results-actions">
+        <button class="btn btn-primary btn-glow" id="downloadPdf">
+            <i class="fas fa-file-pdf"></i>
+            <span>Download PDF Report</span>
+            <div class="btn-shine"></div>
+        </button>
+        <a href="/results/{{ job_id }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Results</span>
+        </a>
+        <a href="/upload" class="btn btn-secondary">
+            <i class="fas fa-redo"></i>
+            <span>New Analysis</span>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const jobId = document.querySelector('.report-section').dataset.jobId;
+
+    fetch(`/api/report-data/${jobId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) return;
+            populateReport(data);
+        });
+
+    function populateReport(data) {
+        const threatLevel = data.threat_level || 'SAFE';
+        const threatScore = data.threat_score || 0;
+        const interp = data.interpretation || {};
+
+        // Animate gauge
+        animateGauge(threatScore, threatLevel);
+
+        // Summary
+        const threatColors = {HIGH:'#ff0040', MEDIUM:'#ff8800', LOW:'#ffcc00', SAFE:'#00cc66'};
+        document.getElementById('sumThreat').textContent = threatLevel;
+        document.getElementById('sumThreat').style.color = threatColors[threatLevel] || '#00cc66';
+
+        const totalWeapons = data.total_weapons || data.weapon_count || 0;
+        document.getElementById('sumWeapons').textContent = totalWeapons;
+        document.getElementById('sumConfidence').textContent = (data.avg_confidence * 100).toFixed(1) + '%';
+        document.getElementById('sumFileName').textContent = data.file_name || '--';
+        document.getElementById('sumDate').textContent = data.created_at
+            ? new Date(data.created_at).toLocaleString() : '--';
+
+        // AI Messages
+        const msgContainer = document.getElementById('aiMessages');
+        msgContainer.innerHTML = '';
+        if (interp.messages && interp.messages.length) {
+            interp.messages.forEach((msg, i) => {
+                const div = document.createElement('div');
+                div.className = 'ai-message';
+                div.style.animationDelay = `${i * 0.15}s`;
+                const icon = msg.includes('CRITICAL') ? 'fa-triangle-exclamation'
+                    : msg.includes('No weapon') ? 'fa-check-circle'
+                    : 'fa-info-circle';
+                const cls = msg.includes('CRITICAL') ? 'msg-critical'
+                    : msg.includes('No weapon') ? 'msg-safe' : 'msg-info';
+                div.classList.add(cls);
+                div.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+                msgContainer.appendChild(div);
+            });
+        } else {
+            msgContainer.innerHTML = '<div class="ai-message msg-safe"><i class="fas fa-check-circle"></i> No additional analysis available.</div>';
+        }
+
+        // Recommendations
+        if (interp.recommendations && interp.recommendations.length) {
+            document.getElementById('recsCard').style.display = 'block';
+            const recsList = document.getElementById('recsList');
+            recsList.innerHTML = '';
+            interp.recommendations.forEach((rec, i) => {
+                const div = document.createElement('div');
+                div.className = 'rec-item';
+                div.style.animationDelay = `${i * 0.1}s`;
+                div.innerHTML = `<div class="rec-bullet">${i + 1}</div><span>${rec}</span>`;
+                recsList.appendChild(div);
+            });
+        }
+
+        // Timeline (video)
+        if (data.heatmap && data.heatmap.length > 0) {
+            document.getElementById('timelineCard').style.display = 'block';
+            renderTimeline(data.heatmap);
+        }
+
+        // Snapshots (video)
+        if (data.frame_snapshots && data.frame_snapshots.length > 0) {
+            document.getElementById('galleryCard').style.display = 'block';
+            const gallery = document.getElementById('snapshotGallery');
+            gallery.innerHTML = '';
+            data.frame_snapshots.forEach(snap => {
+                const div = document.createElement('div');
+                div.className = 'snapshot-item';
+                div.innerHTML = `
+                    <img src="${snap.path}" alt="Frame ${snap.frame}" loading="lazy">
+                    <div class="snapshot-info">
+                        <span class="snap-time">${snap.second.toFixed(1)}s</span>
+                        <span class="snap-threat threat-${snap.threat.toLowerCase()}">${snap.threat}</span>
+                    </div>`;
+                gallery.appendChild(div);
+            });
+        }
+    }
+
+    function animateGauge(score, level) {
+        const maxDash = 251;
+        const fill = document.getElementById('gaugeFill');
+        const needle = document.getElementById('gaugeNeedle');
+        const valEl = document.getElementById('gaugeValue');
+        const labelEl = document.getElementById('gaugeLabel');
+
+        const targetOffset = maxDash - (score / 100) * maxDash;
+        const targetAngle = -90 + (score / 100) * 180;
+
+        const threatColors = {HIGH:'#ff0040', MEDIUM:'#ff8800', LOW:'#ffcc00', SAFE:'#00cc66'};
+        labelEl.textContent = level;
+        labelEl.style.color = threatColors[level] || '#00cc66';
+
+        let current = 0;
+        const duration = 2000;
+        const start = performance.now();
+        function animate(now) {
+            const p = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - p, 3);
+            current = ease * score;
+            valEl.textContent = Math.round(current);
+            fill.style.strokeDashoffset = maxDash - (current / 100) * maxDash;
+            needle.setAttribute('transform', `rotate(${-90 + (current / 100) * 180}, 100, 110)`);
+            if (p < 1) requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+    }
+
+    function renderTimeline(heatmap) {
+        const container = document.getElementById('timelineChart');
+        container.innerHTML = '';
+        const maxScore = Math.max(...heatmap.map(h => h.score), 1);
+
+        heatmap.forEach(h => {
+            const bar = document.createElement('div');
+            bar.className = 'timeline-bar';
+            const height = Math.max(4, (h.score / 100) * 100);
+            const colors = {SAFE:'#00cc66', LOW:'#ffcc00', MEDIUM:'#ff8800', HIGH:'#ff0040'};
+            bar.style.height = height + '%';
+            bar.style.background = colors[h.threat] || '#00cc66';
+            bar.title = `${h.second}s - ${h.threat} (Score: ${h.score})`;
+            container.appendChild(bar);
+        });
+    }
+
+    // Download PDF
+    document.getElementById('downloadPdf').addEventListener('click', () => {
+        window.location.href = `/api/report/${jobId}`;
+    });
+});
+</script>
+{% endblock %}

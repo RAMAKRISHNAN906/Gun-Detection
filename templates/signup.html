@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SentinelAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #050816;
+            --bg-secondary: #0a0e27;
+            --glass-bg: rgba(15, 23, 62, 0.5);
+            --glass-border: rgba(0, 212, 255, 0.15);
+            --text-primary: #e0e6ff;
+            --text-secondary: #8892b0;
+            --text-muted: #5a6380;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #0066ff;
+            --accent-purple: #8b5cf6;
+            --gradient-primary: linear-gradient(135deg, #00d4ff, #0066ff, #8b5cf6);
+            --font-display: 'Orbitron', sans-serif;
+            --font-heading: 'Rajdhani', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.3; z-index: 0;
+            animation: orbFloat 8s ease-in-out infinite;
+        }
+        .orb-1 { width: 400px; height: 400px; background: #8b5cf6; top: -100px; right: -100px; }
+        .orb-2 { width: 350px; height: 350px; background: #0066ff; bottom: -100px; left: -100px; animation-delay: 3s; }
+        .orb-3 { width: 200px; height: 200px; background: #00d4ff; top: 40%; left: 15%; animation-delay: 5s; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, 30px); }
+        }
+
+        .auth-container {
+            position: relative; z-index: 10;
+            width: 100%; max-width: 460px; padding: 0 1.5rem;
+        }
+
+        .auth-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: cardAppear 0.6s ease;
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .auth-logo {
+            text-align: center; margin-bottom: 1.5rem;
+        }
+
+        .logo-icon-wrapper {
+            width: 60px; height: 60px;
+            margin: 0 auto 1rem;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            font-size: 1.4rem; color: #fff;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.5); }
+        }
+
+        .auth-logo h1 {
+            font-family: var(--font-display);
+            font-size: 1.5rem; font-weight: 700; letter-spacing: 2px;
+        }
+
+        .auth-logo h1 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-title {
+            font-family: var(--font-heading);
+            font-size: 1.6rem; font-weight: 600;
+            text-align: center; margin-bottom: 0.3rem;
+        }
+
+        .auth-subtitle {
+            text-align: center; font-size: 0.9rem;
+            color: var(--text-secondary); margin-bottom: 1.5rem;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+
+        .form-label {
+            display: block;
+            font-family: var(--font-heading);
+            font-size: 0.85rem; font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px; letter-spacing: 0.5px;
+        }
+
+        .input-wrapper { position: relative; }
+
+        .input-wrapper i {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted); font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.04);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .toggle-password {
+            position: absolute; right: 14px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 0.9rem; transition: color 0.3s;
+        }
+        .toggle-password:hover { color: var(--accent-cyan); }
+
+        .error-message {
+            background: rgba(255, 0, 64, 0.1);
+            border: 1px solid rgba(255, 0, 64, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px; margin-bottom: 1rem;
+            font-size: 0.85rem; color: #ff4d6d;
+            display: flex; align-items: center; gap: 8px;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* Password strength */
+        .password-strength {
+            display: flex; gap: 4px; margin-top: 8px;
+        }
+
+        .strength-bar {
+            flex: 1; height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px; transition: background 0.3s;
+        }
+
+        .strength-bar.active-weak { background: #ff4d6d; }
+        .strength-bar.active-fair { background: #ffcc00; }
+        .strength-bar.active-good { background: #00cc66; }
+        .strength-bar.active-strong { background: #00d4ff; }
+
+        .strength-text {
+            font-size: 0.72rem; color: var(--text-muted);
+            margin-top: 4px; font-family: var(--font-heading);
+        }
+
+        .btn-auth {
+            width: 100%; padding: 14px;
+            background: var(--gradient-primary);
+            border: none; border-radius: 12px;
+            color: #fff;
+            font-family: var(--font-heading);
+            font-size: 1.05rem; font-weight: 600;
+            letter-spacing: 0.5px; cursor: pointer;
+            position: relative; overflow: hidden;
+            transition: all 0.3s; margin-top: 0.5rem;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-auth .btn-shine {
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s;
+        }
+        .btn-auth:hover .btn-shine { left: 100%; }
+
+        .auth-divider {
+            display: flex; align-items: center;
+            margin: 1.2rem 0; color: var(--text-muted); font-size: 0.8rem;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .auth-divider span {
+            padding: 0 12px; font-family: var(--font-heading); letter-spacing: 1px;
+        }
+
+        .auth-footer {
+            text-align: center; margin-top: 1.2rem;
+            font-size: 0.9rem; color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--accent-cyan); text-decoration: none;
+            font-weight: 600; transition: color 0.3s;
+        }
+        .auth-footer a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .scanner-decor {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; align-items: center; gap: 10px;
+            color: rgba(0, 212, 255, 0.2);
+            font-family: var(--font-display);
+            font-size: 0.7rem; letter-spacing: 2px; z-index: 5;
+        }
+
+        .scanner-decor .dot {
+            width: 6px; height: 6px;
+            background: rgba(0, 212, 255, 0.4);
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @media (max-width: 500px) {
+            .auth-card { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-icon-wrapper">
+                    <i class="fas fa-crosshairs"></i>
+                </div>
+                <h1>SENTINEL<span>AI</span></h1>
+            </div>
+
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Register to access the AI detection platform</p>
+
+            {% if error %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/signup">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="fullname" class="form-input" placeholder="John Doe" required value="{{ request.form.get('fullname', '') }}">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <input type="email" name="email" class="form-input" placeholder="you@example.com" required value="{{ request.form.get('email', '') }}">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password" id="password" class="form-input" placeholder="Min 6 characters" required minlength="6">
+                        <i class="fas fa-lock"></i>
+                        <button type="button" class="toggle-password" onclick="togglePass('password', 'eyeIcon1')">
+                            <i class="fas fa-eye" id="eyeIcon1"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="strengthBars">
+                        <div class="strength-bar" id="bar1"></div>
+                        <div class="strength-bar" id="bar2"></div>
+                        <div class="strength-bar" id="bar3"></div>
+                        <div class="strength-bar" id="bar4"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" name="confirm_password" id="confirmPassword" class="form-input" placeholder="Re-enter password" required>
+                        <i class="fas fa-shield-halved"></i>
+                        <button type="button" class="toggle-password" onclick="togglePass('confirmPassword', 'eyeIcon2')">
+                            <i class="fas fa-eye" id="eyeIcon2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <span>Create Account</span>
+                    <div class="btn-shine"></div>
+                </button>
+            </form>
+
+            <div class="auth-divider"><span>ALREADY REGISTERED?</span></div>
+
+            <div class="auth-footer">
+                Have an account? <a href="/login">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="scanner-decor">
+        <div class="dot"></div>
+        <span>ENCRYPTED SIGNUP</span>
+    </div>
+
+    <script>
+        function togglePass(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Password strength indicator
+        const passInput = document.getElementById('password');
+        const bars = [document.getElementById('bar1'), document.getElementById('bar2'),
+                      document.getElementById('bar3'), document.getElementById('bar4')];
+        const strengthText = document.getElementById('strengthText');
+
+        passInput.addEventListener('input', () => {
+            const val = passInput.value;
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+            if (/[0-9]/.test(val) || /[^A-Za-z0-9]/.test(val)) score++;
+
+            const levels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+            const classes = ['', 'active-weak', 'active-fair', 'active-good', 'active-strong'];
+
+            bars.forEach((bar, i) => {
+                bar.className = 'strength-bar';
+                if (i < score) bar.classList.add(classes[score]);
+            });
+            strengthText.textContent = val.length > 0 ? levels[score] || '' : '';
+        });
+    </script>
+</body>
+</html>

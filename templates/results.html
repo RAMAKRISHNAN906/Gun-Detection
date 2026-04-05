@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Detection Results - SentinelAI{% endblock %}
+
+{% block content %}
+<section class="results-section" data-job-id="{{ job_id }}">
+    <div class="section-header">
+        <h2 class="section-title">Detection <span class="gradient-text">Results</span></h2>
+        <p class="section-subtitle">AI analysis complete - review detected threats below</p>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alertBanner" style="display:none;">
+        <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="alert-text" id="alertText"></div>
+        <div class="alert-pulse"></div>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon threat-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="stat-card-value" id="statThreat">--</div>
+            <div class="stat-card-label">Threat Level</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon weapon-icon"><i class="fas fa-crosshairs"></i></div>
+            <div class="stat-card-value" id="statWeapons">0</div>
+            <div class="stat-card-label">Weapons Detected</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon conf-icon"><i class="fas fa-percentage"></i></div>
+            <div class="stat-card-value" id="statConfidence">0%</div>
+            <div class="stat-card-label">Avg Confidence</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon fps-icon"><i class="fas fa-bolt"></i></div>
+            <div class="stat-card-value" id="statSpeed">--</div>
+            <div class="stat-card-label">Processing Speed</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon person-icon"><i class="fas fa-user"></i></div>
+            <div class="stat-card-value" id="statPersons">0</div>
+            <div class="stat-card-label">Persons Detected</div>
+        </div>
+        <div class="stat-card glass-card">
+            <div class="stat-card-icon frames-icon"><i class="fas fa-film"></i></div>
+            <div class="stat-card-value" id="statFrames">0</div>
+            <div class="stat-card-label">Frames Analyzed</div>
+        </div>
+    </div>
+
+    <!-- Comparison View -->
+    <div class="comparison-container glass-card">
+        <div class="comparison-header">
+            <h3><i class="fas fa-columns"></i> Side-by-Side Comparison</h3>
+        </div>
+        <div class="comparison-grid">
+            <div class="comparison-panel">
+                <div class="panel-label">Original</div>
+                <div class="panel-content" id="originalPanel">
+                    <div class="panel-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="comparison-divider">
+                <div class="divider-icon"><i class="fas fa-arrow-right"></i></div>
+            </div>
+            <div class="comparison-panel">
+                <div class="panel-label">AI Detection</div>
+                <div class="panel-content" id="detectedPanel">
+                    <div class="panel-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Details -->
+    <div class="detections-list glass-card" id="detectionsList" style="display:none;">
+        <div class="detections-header">
+            <h3><i class="fas fa-list"></i> Detection Details</h3>
+        </div>
+        <div class="detections-body" id="detectionsBody">
+            <!-- Filled dynamically -->
+        </div>
+    </div>
+
+    <!-- AI Interpretation -->
+    <div class="interpretation-card glass-card" id="interpretationCard" style="display:none;">
+        <div class="interpretation-header">
+            <h3><i class="fas fa-brain"></i> AI Interpretation</h3>
+        </div>
+        <div class="interpretation-body" id="interpretationBody">
+            <!-- Filled dynamically -->
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="results-actions">
+        <a href="/report/{{ job_id }}" class="btn btn-primary btn-glow" id="viewReport">
+            <i class="fas fa-chart-pie"></i>
+            <span>View Full Report</span>
+            <div class="btn-shine"></div>
+        </a>
+        <button class="btn btn-secondary" id="downloadReport">
+            <i class="fas fa-file-pdf"></i>
+            <span>Download PDF</span>
+        </button>
+        <a href="/upload" class="btn btn-secondary">
+            <i class="fas fa-redo"></i>
+            <span>New Analysis</span>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}

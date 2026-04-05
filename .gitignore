@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+static/uploads/
+reports/
+*.log
+nohup.out
+users.db
