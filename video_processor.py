@@ -31,7 +31,7 @@ class VideoProcessor:
         Phase 1 (~12s): seek & detect 25 frames.
         Phase 2 (~5s): write full video using nearest annotated frame per position.
         """
-        MAX_SAMPLE_FRAMES = 25
+        MAX_SAMPLE_FRAMES = 100
 
         video_path = str(video_path)
         cap = cv2.VideoCapture(video_path)
@@ -44,8 +44,8 @@ class VideoProcessor:
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         duration = total_frames / fps if fps > 0 else 0
 
-        # Resize for faster inference (max 640px wide)
-        proc_width = min(width, 640)
+        # Resize for faster inference (max 320px wide — matches imgsz=320 in detector)
+        proc_width = min(width, 320)
         proc_height = int(height * proc_width / width) if width > 0 else height
         do_scale = proc_width != width
 

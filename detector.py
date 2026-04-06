@@ -182,13 +182,13 @@ class WeaponDetector:
         detections = []
         annotated = frame.copy()
 
-        results = self.model(frame, conf=self.confidence_threshold, verbose=False)
+        results = self.model(frame, conf=self.confidence_threshold, verbose=False, imgsz=320)
 
         if self.model_type == 'custom':
             detections = self._process_custom_results(results, annotated)
             # Also detect persons using COCO model
             if self.person_model:
-                person_results = self.person_model(frame, conf=0.3, classes=[0], verbose=False)
+                person_results = self.person_model(frame, conf=0.3, classes=[0], verbose=False, imgsz=320)
                 detections += self._process_person_results(person_results, annotated)
         else:
             detections = self._process_coco_results(results, annotated)
