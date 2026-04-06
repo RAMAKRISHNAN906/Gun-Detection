@@ -25,14 +25,14 @@ class VideoProcessor:
         self.upload_dir.mkdir(parents=True, exist_ok=True)
         self.processed_dir.mkdir(parents=True, exist_ok=True)
 
-    def process_video(self, video_path, progress_callback=None, frame_skip=1):
+    def process_video(self, video_path, progress_callback=None, frame_skip=None):
         """
         Process entire video with weapon detection.
 
         Args:
             video_path: Path to input video
             progress_callback: Optional callback(percent, message)
-            frame_skip: Process every Nth frame (1=all frames)
+            frame_skip: Process every Nth frame. None = auto (1 frame/sec)
 
         Returns:
             Dictionary with analysis results
@@ -49,6 +49,15 @@ class VideoProcessor:
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         duration = total_frames / fps if fps > 0 else 0
+
+        # Auto frame_skip: process 1 frame per second max
+        if frame_skip is None:
+            frame_skip = max(1, int(fps))
+
+        # Resize for faster inference (max width 640)
+        proc_width = min(width, 640)
+        proc_height = int(height * proc_width / width) if width > 0 else height
+        scale = proc_width != width
 
         # Setup output video writer
         basename = Path(video_path).stem
@@ -82,8 +91,27 @@ class VideoProcessor:
             current_second = frame_idx / fps if fps > 0 else 0
 
             if frame_idx % frame_skip == 0:
-                # Run detection
-                result = self.detector.detect(frame)
+                # Resize for faster inference
+                small = cv2.resize(frame, (proc_width, proc_height)) if scale else frame
+                result = self.detector.detect(small)
+                # Scale bboxes back to original resolution
+                if scale:
+                    sx = width / proc_width
+                    sy = height / proc_height
+                    for d in result['detections']:
+                        x1, y1, x2, y2 = d['bbox']
+                        d['bbox'] = [int(x1*sx), int(y1*sy), int(x2*sx), int(y2*sy)]
+                    # Re-annotate on original frame
+                    result['annotated_frame'] = frame.copy()
+                    for d in result['detections']:
+                        color = (0,0,255) if d['type']=='weapon' else (255,165,0)
+                        x1,y1,x2,y2 = d['bbox']
+                        cv2.rectangle(result['annotated_frame'], (x1,y1), (x2,y2), color, 2)
+                        cv2.putText(result['annotated_frame'],
+                            f"{d['label'].upper()} {d['confidence']:.0%}",
+                            (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
+                    self.detector._draw_threat_banner(result['annotated_frame'], result['threat'], result['detections'])
+
                 annotated = result['annotated_frame']
                 processing_times.append(result['inference_time'])
 

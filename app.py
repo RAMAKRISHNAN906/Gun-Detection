@@ -378,8 +378,8 @@ def _process_job(job_id, file_path, file_type):
 
         if file_type == 'video':
             processing_jobs[job_id]['message'] = 'Analyzing video frames...'
-            # Process every frame for better detection coverage.
-            result = proc.process_video(file_path, progress_callback=progress_cb, frame_skip=1)
+            # Process 1 frame per second for speed (auto frame_skip based on fps)
+            result = proc.process_video(file_path, progress_callback=progress_cb, frame_skip=None)
         else:
             processing_jobs[job_id]['message'] = 'Analyzing image...'
             processing_jobs[job_id]['progress'] = 50
