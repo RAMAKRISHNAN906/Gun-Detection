@@ -27,47 +27,46 @@ class VideoProcessor:
 
     def process_video(self, video_path, progress_callback=None, frame_skip=None):
         """
-        Process entire video with weapon detection.
-
-        Args:
-            video_path: Path to input video
-            progress_callback: Optional callback(percent, message)
-            frame_skip: Process every Nth frame. None = auto (1 frame/sec)
-
-        Returns:
-            Dictionary with analysis results
+        Process video using seek-based sampling for speed.
+        Only reads/processes MAX_SAMPLE_FRAMES frames — target <30s on CPU.
         """
+        MAX_SAMPLE_FRAMES = 25  # process at most 25 frames regardless of video length
+        OUTPUT_FPS = 5          # output video plays sampled frames at 5 fps
+
         video_path = str(video_path)
         cap = cv2.VideoCapture(video_path)
 
         if not cap.isOpened():
             raise ValueError(f"Could not open video: {video_path}")
 
-        # Get video properties
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         duration = total_frames / fps if fps > 0 else 0
 
-        # Auto frame_skip: process 1 frame per second max
-        if frame_skip is None:
-            frame_skip = max(1, int(fps))
-
-        # Resize for faster inference (max width 640)
+        # Resize for faster inference (max 640px wide)
         proc_width = min(width, 640)
         proc_height = int(height * proc_width / width) if width > 0 else height
-        scale = proc_width != width
+        do_scale = proc_width != width
 
-        # Setup output video writer
+        # Pick evenly spaced frame indices to sample
+        n_samples = min(MAX_SAMPLE_FRAMES, total_frames)
+        if n_samples <= 1:
+            sample_indices = [0]
+        else:
+            step = total_frames / n_samples
+            sample_indices = [int(i * step) for i in range(n_samples)]
+
+        # Setup output video (only sampled frames, at OUTPUT_FPS)
         basename = Path(video_path).stem
         output_path = str(self.processed_dir / f"{basename}_detected.mp4")
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        out = cv2.VideoWriter(output_path, fourcc, OUTPUT_FPS, (width, height))
 
         # Analysis accumulators
         all_detections = []
-        timeline = []  # {second: threat_level}
+        timeline = []
         frame_snapshots = []
         total_weapons = 0
         total_persons = 0
@@ -79,122 +78,93 @@ class VideoProcessor:
         weapon_frames = 0
         fighting_frames = 0
         max_fighting_group = 0
-
-        frame_idx = 0
         processed_count = 0
 
-        while True:
+        for i, frame_idx in enumerate(sample_indices):
+            # Seek directly to the frame — skip reading intermediate frames
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
             ret, frame = cap.read()
             if not ret:
-                break
+                continue
 
             current_second = frame_idx / fps if fps > 0 else 0
 
-            if frame_idx % frame_skip == 0:
-                # Resize for faster inference
-                small = cv2.resize(frame, (proc_width, proc_height)) if scale else frame
-                result = self.detector.detect(small)
-                # Scale bboxes back to original resolution
-                if scale:
-                    sx = width / proc_width
-                    sy = height / proc_height
-                    for d in result['detections']:
-                        x1, y1, x2, y2 = d['bbox']
-                        d['bbox'] = [int(x1*sx), int(y1*sy), int(x2*sx), int(y2*sy)]
-                    # Re-annotate on original frame
-                    result['annotated_frame'] = frame.copy()
-                    for d in result['detections']:
-                        color = (0,0,255) if d['type']=='weapon' else (255,165,0)
-                        x1,y1,x2,y2 = d['bbox']
-                        cv2.rectangle(result['annotated_frame'], (x1,y1), (x2,y2), color, 2)
-                        cv2.putText(result['annotated_frame'],
-                            f"{d['label'].upper()} {d['confidence']:.0%}",
-                            (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
-                    self.detector._draw_threat_banner(result['annotated_frame'], result['threat'], result['detections'])
+            # Resize for faster inference
+            small = cv2.resize(frame, (proc_width, proc_height)) if do_scale else frame
+            result = self.detector.detect(small)
 
+            # Scale annotated frame back to original size for output
+            if do_scale:
+                annotated = cv2.resize(result['annotated_frame'], (width, height))
+            else:
                 annotated = result['annotated_frame']
-                processing_times.append(result['inference_time'])
 
-                weapon_count = result['weapon_count']
-                person_count = result['person_count']
-                threat = result['threat']
+            processing_times.append(result['inference_time'])
+            weapon_count = result['weapon_count']
+            person_count = result['person_count']
+            threat = result['threat']
 
-                total_weapons += weapon_count
-                total_persons += person_count
+            total_weapons += weapon_count
+            total_persons += person_count
 
-                if weapon_count > 0:
-                    weapon_frames += 1
+            if weapon_count > 0:
+                weapon_frames += 1
 
-                # Track fighting detection
-                if result.get('fighting_detected'):
-                    fighting_frames += 1
-                    group_size = threat.get('fighting_group_size', 0)
-                    if group_size > max_fighting_group:
-                        max_fighting_group = group_size
+            if result.get('fighting_detected'):
+                fighting_frames += 1
+                group_size = threat.get('fighting_group_size', 0)
+                if group_size > max_fighting_group:
+                    max_fighting_group = group_size
 
-                # Track confidence
-                for d in result['detections']:
-                    if d['type'] == 'weapon':
-                        total_confidence += d['confidence']
-                        confidence_count += 1
+            for d in result['detections']:
+                if d['type'] == 'weapon':
+                    total_confidence += d['confidence']
+                    confidence_count += 1
 
-                # Update max threat level
-                if threat_priority.get(threat['level'], 0) > threat_priority.get(max_threat_level, 0):
-                    max_threat_level = threat['level']
+            if threat_priority.get(threat['level'], 0) > threat_priority.get(max_threat_level, 0):
+                max_threat_level = threat['level']
 
-                # Timeline data (per second)
-                second_key = int(current_second)
-                timeline_entry = {
-                    'second': second_key,
-                    'timestamp': round(current_second, 2),
-                    'threat_level': threat['level'],
-                    'weapon_count': weapon_count,
-                    'person_count': person_count,
-                    'score': threat['score'],
-                    'fighting': result.get('fighting_detected', False),
-                }
-                timeline.append(timeline_entry)
+            timeline.append({
+                'second': int(current_second),
+                'timestamp': round(current_second, 2),
+                'threat_level': threat['level'],
+                'weapon_count': weapon_count,
+                'person_count': person_count,
+                'score': threat['score'],
+                'fighting': result.get('fighting_detected', False),
+            })
 
-                # Store per-frame detection data
-                frame_data = {
+            all_detections.append({
+                'frame': frame_idx,
+                'second': round(current_second, 2),
+                'detections': [{
+                    'label': d['label'],
+                    'confidence': round(d['confidence'], 3),
+                    'bbox': d['bbox'],
+                    'type': d['type'],
+                } for d in result['detections']],
+                'threat': threat['level'],
+                'weapon_count': weapon_count,
+            })
+
+            if weapon_count > 0 and len(frame_snapshots) < 20:
+                snapshot_name = f"{basename}_frame_{frame_idx}.jpg"
+                snapshot_path = str(self.processed_dir / snapshot_name)
+                cv2.imwrite(snapshot_path, annotated)
+                frame_snapshots.append({
+                    'path': f"/static/uploads/processed/{snapshot_name}",
                     'frame': frame_idx,
                     'second': round(current_second, 2),
-                    'detections': [{
-                        'label': d['label'],
-                        'confidence': round(d['confidence'], 3),
-                        'bbox': d['bbox'],
-                        'type': d['type'],
-                    } for d in result['detections']],
                     'threat': threat['level'],
-                    'weapon_count': weapon_count,
-                }
-                all_detections.append(frame_data)
+                    'weapons': weapon_count,
+                })
 
-                # Save snapshots for key frames (weapon detected)
-                if weapon_count > 0 and len(frame_snapshots) < 20:
-                    snapshot_name = f"{basename}_frame_{frame_idx}.jpg"
-                    snapshot_path = str(self.processed_dir / snapshot_name)
-                    cv2.imwrite(snapshot_path, annotated)
-                    frame_snapshots.append({
-                        'path': f"/static/uploads/processed/{snapshot_name}",
-                        'frame': frame_idx,
-                        'second': round(current_second, 2),
-                        'threat': threat['level'],
-                        'weapons': weapon_count,
-                    })
+            out.write(annotated)
+            processed_count += 1
 
-                out.write(annotated)
-                processed_count += 1
-            else:
-                # Write original frame for skipped frames
-                out.write(frame)
-
-            frame_idx += 1
-
-            # Progress callback
-            if progress_callback and total_frames > 0:
-                percent = int((frame_idx / total_frames) * 100)
-                progress_callback(percent, f"Processing frame {frame_idx}/{total_frames}")
+            if progress_callback:
+                percent = int(((i + 1) / n_samples) * 100)
+                progress_callback(percent, f"Analyzing frame {i+1}/{n_samples}")
 
         cap.release()
         out.release()
