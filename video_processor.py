@@ -27,15 +27,14 @@ class VideoProcessor:
 
     def process_video(self, video_path, progress_callback=None, frame_skip=None):
         """
-        Process video using seek-based sampling for speed.
-        Only reads/processes MAX_SAMPLE_FRAMES frames — target <30s on CPU.
+        Fast processing: analyze 25 sampled frames, output full-duration video.
+        Phase 1 (~12s): seek & detect 25 frames.
+        Phase 2 (~5s): write full video using nearest annotated frame per position.
         """
-        MAX_SAMPLE_FRAMES = 25  # process at most 25 frames regardless of video length
-        OUTPUT_FPS = 5          # output video plays sampled frames at 5 fps
+        MAX_SAMPLE_FRAMES = 25
 
         video_path = str(video_path)
         cap = cv2.VideoCapture(video_path)
-
         if not cap.isOpened():
             raise ValueError(f"Could not open video: {video_path}")
 
@@ -50,21 +49,14 @@ class VideoProcessor:
         proc_height = int(height * proc_width / width) if width > 0 else height
         do_scale = proc_width != width
 
-        # Pick evenly spaced frame indices to sample
+        # Evenly spaced sample indices
         n_samples = min(MAX_SAMPLE_FRAMES, total_frames)
-        if n_samples <= 1:
-            sample_indices = [0]
-        else:
-            step = total_frames / n_samples
-            sample_indices = [int(i * step) for i in range(n_samples)]
+        step = total_frames / n_samples
+        sample_indices = [int(i * step) for i in range(n_samples)]
 
-        # Setup output video (only sampled frames, at OUTPUT_FPS)
         basename = Path(video_path).stem
-        output_path = str(self.processed_dir / f"{basename}_detected.mp4")
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, OUTPUT_FPS, (width, height))
 
-        # Analysis accumulators
+        # ── Phase 1: Detect on sampled frames ─────────────────────────
         all_detections = []
         timeline = []
         frame_snapshots = []
@@ -80,24 +72,21 @@ class VideoProcessor:
         max_fighting_group = 0
         processed_count = 0
 
+        # Maps sample_frame_idx -> annotated frame (full resolution)
+        annotated_map = {}
+
         for i, frame_idx in enumerate(sample_indices):
-            # Seek directly to the frame — skip reading intermediate frames
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
             ret, frame = cap.read()
             if not ret:
                 continue
 
             current_second = frame_idx / fps if fps > 0 else 0
-
-            # Resize for faster inference
             small = cv2.resize(frame, (proc_width, proc_height)) if do_scale else frame
             result = self.detector.detect(small)
 
-            # Scale annotated frame back to original size for output
-            if do_scale:
-                annotated = cv2.resize(result['annotated_frame'], (width, height))
-            else:
-                annotated = result['annotated_frame']
+            annotated = cv2.resize(result['annotated_frame'], (width, height)) if do_scale else result['annotated_frame']
+            annotated_map[frame_idx] = annotated
 
             processing_times.append(result['inference_time'])
             weapon_count = result['weapon_count']
@@ -106,21 +95,17 @@ class VideoProcessor:
 
             total_weapons += weapon_count
             total_persons += person_count
-
             if weapon_count > 0:
                 weapon_frames += 1
-
             if result.get('fighting_detected'):
                 fighting_frames += 1
                 group_size = threat.get('fighting_group_size', 0)
                 if group_size > max_fighting_group:
                     max_fighting_group = group_size
-
             for d in result['detections']:
                 if d['type'] == 'weapon':
                     total_confidence += d['confidence']
                     confidence_count += 1
-
             if threat_priority.get(threat['level'], 0) > threat_priority.get(max_threat_level, 0):
                 max_threat_level = threat['level']
 
@@ -133,40 +118,57 @@ class VideoProcessor:
                 'score': threat['score'],
                 'fighting': result.get('fighting_detected', False),
             })
-
             all_detections.append({
                 'frame': frame_idx,
                 'second': round(current_second, 2),
-                'detections': [{
-                    'label': d['label'],
-                    'confidence': round(d['confidence'], 3),
-                    'bbox': d['bbox'],
-                    'type': d['type'],
-                } for d in result['detections']],
+                'detections': [{'label': d['label'], 'confidence': round(d['confidence'], 3),
+                                'bbox': d['bbox'], 'type': d['type']} for d in result['detections']],
                 'threat': threat['level'],
                 'weapon_count': weapon_count,
             })
-
             if weapon_count > 0 and len(frame_snapshots) < 20:
-                snapshot_name = f"{basename}_frame_{frame_idx}.jpg"
-                snapshot_path = str(self.processed_dir / snapshot_name)
-                cv2.imwrite(snapshot_path, annotated)
+                snap_name = f"{basename}_frame_{frame_idx}.jpg"
+                snap_path = str(self.processed_dir / snap_name)
+                cv2.imwrite(snap_path, annotated)
                 frame_snapshots.append({
-                    'path': f"/static/uploads/processed/{snapshot_name}",
-                    'frame': frame_idx,
-                    'second': round(current_second, 2),
-                    'threat': threat['level'],
-                    'weapons': weapon_count,
+                    'path': f"/static/uploads/processed/{snap_name}",
+                    'frame': frame_idx, 'second': round(current_second, 2),
+                    'threat': threat['level'], 'weapons': weapon_count,
                 })
 
-            out.write(annotated)
             processed_count += 1
-
             if progress_callback:
-                percent = int(((i + 1) / n_samples) * 100)
+                percent = int(((i + 1) / n_samples) * 50)  # phase 1 = 0-50%
                 progress_callback(percent, f"Analyzing frame {i+1}/{n_samples}")
 
         cap.release()
+
+        # ── Phase 2: Write full-duration output video ──────────────────
+        # For each original frame, use the nearest sampled annotated frame
+        output_path = str(self.processed_dir / f"{basename}_detected.mp4")
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        sorted_sample_indices = sorted(annotated_map.keys())
+
+        cap2 = cv2.VideoCapture(video_path)
+        frame_write_idx = 0
+        while True:
+            ret, orig_frame = cap2.read()
+            if not ret:
+                break
+
+            # Find nearest sampled index
+            nearest = min(sorted_sample_indices, key=lambda s: abs(s - frame_write_idx))
+            out.write(annotated_map[nearest])
+
+            frame_write_idx += 1
+            if progress_callback and total_frames > 0:
+                percent = 50 + int((frame_write_idx / total_frames) * 50)  # phase 2 = 50-100%
+                if frame_write_idx % 30 == 0:
+                    progress_callback(percent, f"Building output video...")
+
+        cap2.release()
         out.release()
 
         # Re-encode to H.264 for browser playback
